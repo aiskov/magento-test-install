@@ -1,4 +1,4 @@
-magento-test-install
+Magento Test Install
 ====================
 
 Example of Vagrantfile:
