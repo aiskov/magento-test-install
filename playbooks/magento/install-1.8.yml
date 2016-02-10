@@ -1,0 +1,18 @@
+- hosts: all
+  sudo: yes
+
+  vars_files:
+    - ../../vars/apache2.yml
+    - ../../vars/php5.yml
+    - ../../vars/mysql.yml
+    - ../../vars/magento-1.8.yml
+
+  tasks:
+    - include: ../../tasks/apache2.yml
+    - include: ../../tasks/php5.yml
+    - include: ../../tasks/mysql.yml
+    - include: ../../tasks/magento.yml
+
+  handlers:
+    - include: ../../handlers/mysql.yml
+    - include: ../../handlers/apache2.yml

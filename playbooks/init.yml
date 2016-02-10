@@ -1,0 +1,12 @@
+- hosts: all
+  sudo: yes
+
+  vars_files:
+    - ../vars/base.yml
+
+  tasks:
+    - include: ../tasks/ufw.yml
+    - include: ../tasks/base-packages.yml
+    - include: ../tasks/locale.yml
+    - include: ../tasks/timezone.yml
+    - include: ../tasks/swap.yml

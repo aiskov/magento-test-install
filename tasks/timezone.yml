@@ -1,0 +1,6 @@
+---
+- name: Timezone | Set configuration
+  lineinfile: dest=/etc/timezone line="{{time_zone}}"
+
+- name: Timezone | Update
+  command: dpkg-reconfigure -f noninteractive tzdata

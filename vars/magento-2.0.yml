@@ -1,0 +1,21 @@
+---
+magento:
+  port: 80
+  db: magento
+  dir: /var/www/magento
+
+  version: 2.0.0
+  url: https://github.com/magento/magento2/archive/2.0.0.tar.gz
+
+  sample_version: 2.0.0
+  sample_url: https://github.com/magento/magento2-sample-data/archive/2.0.0.tar.gz
+
+  seqr_url: https://github.com/SeamlessDistribution/seqr-magento-plugin/archive/master.zip
+
+  timezone: Europe/Tallinn
+  locale: en_GB
+  default_currency: USD
+  host: mage.lh
+  admin_email: test@seamless.se
+  admin_username: admin
+  admin_password: 1qazxsw2

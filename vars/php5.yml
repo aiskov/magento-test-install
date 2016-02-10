@@ -1,0 +1,24 @@
+---
+php5:
+  modules:
+    - php5-cli
+    - php5-cgi
+    - php5-curl
+    - php5-common
+    - php5-intl
+    - php5-mcrypt
+    - php5-fpm
+    - php5-gd
+    - php5-mysql
+    - php5-xdebug
+    - php5-imagick
+
+  errors:
+    level: E_ALL
+    display: On
+    log: php_errors.log
+
+  xdebug:
+    remote: On
+    connect_back: On
+    idekey: "test"

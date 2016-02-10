@@ -1,0 +1,27 @@
+---
+- name: SWAP | Check if file exists
+  stat:
+    path: /swapfile
+  register: swapfile
+
+- name: SWAP | Create file
+  shell: fallocate -l {{swap_size}} /swapfile
+  when: swapfile.stat.exists is not defined or not swapfile.stat.exists
+
+- name: SWAP | Manage access to swap
+  file:
+    path: /swapfile
+    mode: 0600
+
+- name: SWAP | Set up swap area
+  shell: mkswap /swapfile
+  when: swapfile.stat.exists is not defined or not swapfile.stat.exists
+
+- name: SWAP | Enable swapping
+  shell: swapon /swapfile
+  when: swapfile.stat.exists is not defined or not swapfile.stat.exists
+
+- name: SWAP | Add file to fstab
+  lineinfile:
+    dest: /etc/fstab
+    line: "/swapfile none swap sw 0 0"

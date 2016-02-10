@@ -1,0 +1,25 @@
+---
+- name: MySQL | Register root password for install
+  shell: "{{item}}"
+  with_items:
+    - "echo \"mysql-server mysql-server/root_password password {{mysql.root_pass}}\" | debconf-set-selections"
+    - "echo \"mysql-server mysql-server/root_password_again password {{mysql.root_pass}}\" | debconf-set-selections"
+
+- name: MySQL | Install packages
+  apt:
+    name: "{{item}}"
+  with_items:
+    - "mysql-server-{{mysql.version}}"
+    - "mysql-client-{{mysql.version}}"
+    - "libmysqlclient-dev"
+
+- name: MySQL | Change config
+  template:
+    src: ../templates/mysql/my.cnf.j2
+    dest: /etc/mysql/my.cnf
+  notify: MySQL | Restart database
+
+- name: MySQL | Install MySQL-python util
+  pip:
+    name: MySQL-python
+

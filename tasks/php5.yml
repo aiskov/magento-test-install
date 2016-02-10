@@ -1,0 +1,42 @@
+---
+- name: PHP | Install packages
+  apt:
+    name: "{{item}}"
+  with_items:
+    - php5
+    - php5-dev
+    - php-pear
+    - libapache2-mod-php5
+
+- name: PHP | Install modules
+  apt:
+    name: "{{item}}"
+  with_items: "{{php5.modules}}"
+
+- name: PHP | Find path to XDebug module
+  shell: "find /usr/lib/php5/*/xdebug.so"
+  register: php5_extension_xdebug
+
+- name: PHP | Find path to MCrypt module
+  shell: "find /usr/lib/php5/*/mcrypt.so"
+  register: php5_extension_mcrypt
+
+- name: PHP | Update Apache2 php.ini
+  template:
+    src: ../templates/php5/php.ini.j2
+    dest: /etc/php5/apache2/php.ini
+
+- name: PHP | Update CGI php.ini
+  template:
+    src: ../templates/php5/php.ini.j2
+    dest: /etc/php5/cgi/php.ini
+
+- name: PHP | Update CLI php.ini
+  template:
+    src: ../templates/php5/php.ini.j2
+    dest: /etc/php5/cli/php.ini
+
+- name: PHP | Update FPM php.ini
+  template:
+    src: ../templates/php5/php.ini.j2
+    dest: /etc/php5/fpm/php.ini

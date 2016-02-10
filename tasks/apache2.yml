@@ -1,0 +1,23 @@
+---
+- name: Apache2 | Install server
+  apt:
+    name: apache2
+
+- name: Apache2 | Change config
+  template:
+    src: ../templates/apache2/apache2.conf.j2
+    dest: /etc/apache2/apache2.conf
+
+- name: Apache2 | Install mode rewrite
+  shell: sudo a2enmod rewrite
+
+- name: Apache2 | Remove default index file
+  file:
+    dest: /var/www/html
+    state: absent
+
+- name: Apache2 | Remove default site
+  file:
+    dest: /etc/apache2/sites-enabled/000-default.conf
+    state: absent
+  notify: Apache2 | Restart server

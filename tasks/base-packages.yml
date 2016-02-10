@@ -1,0 +1,24 @@
+---
+- name: Base packages | Update and upgrade system
+  apt:
+    upgrade: "yes"
+    update_cache: "yes"
+
+- name: Base packages | Install base packages
+  apt:
+    name: "{{item}}"
+  with_items:
+    - nano
+    - links
+    - wget
+    - unzip
+    - tree
+    - curl
+    - mc
+    - python-setuptools
+    - python-dev
+    - python-virtualenv
+    - build-essential
+
+- name: Base packages | Install PIP util
+  shell: easy_install pip

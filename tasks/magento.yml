@@ -1,0 +1,183 @@
+---
+- name: Magento | Create app directory
+  file:
+    path: "{{magento.dir}}"
+    state: directory
+    mode: 0755
+
+- name: Magento | Add apache2 site
+  template:
+    src: ../templates/magento/magento.conf.j2
+    dest: /etc/apache2/sites-enabled/magento.conf
+  notify: Apache2 | Restart server
+
+- name: Magento | Allow remote connects
+  ufw:
+    rule: allow
+    port: "{{magento.port}}"
+
+- name: Magento | Download magento
+  get_url:
+    url: "{{magento.url}}"
+    dest: /tmp/magento.tar.gz
+
+- name: Magento | Extract files
+  unarchive:
+    src: /tmp/magento.tar.gz
+    dest: /tmp
+    copy: no
+
+- name: Magento | Get directory
+  shell: "find /tmp -type f -name 'mage' -exec dirname {} \\;"
+  register: magento_dir
+
+- name: Magento | Copy files
+  shell: "cp -R {{magento_dir.stdout_lines[0]}}/* {{magento.dir}}/"
+
+- name: Magento | Copy htaccess
+  shell: "cp {{magento_dir.stdout_lines[0]}}/.htaccess {{magento.dir}}/"
+
+- name: Magento | Create database
+  mysql_db:
+    name: "{{magento.db}}"
+    login_user: "{{mysql.user}}"
+    login_password: "{{mysql.pass}}"
+    login_port: "{{mysql.port}}"
+    state: present
+
+- name: Magento | Download magento sample data
+  get_url:
+    url: "{{magento.sample_url}}"
+    dest: /tmp/magento_sample.tar.gz
+
+- name: Magento | Extract sample data files
+  unarchive:
+    src: /tmp/magento_sample.tar.gz
+    dest: /tmp
+    copy: no
+  tags:
+    - magento_sample_data
+
+- name: Magento | Get data directory
+  shell: "find /tmp -type f -name 'magento_sample_data*' -exec dirname {} \\;"
+  register: magento_sample_dir
+  tags:
+    - magento_sample_data
+
+- name: Magento | Copy data files
+  shell: "{{item}}"
+  with_items:
+    - "cp -R {{magento_sample_dir.stdout_lines[0]}}/media {{magento.dir}}/"
+    - "cp -R {{magento_sample_dir.stdout_lines[0]}}/skin {{magento.dir}}/"
+  ignore_errors: yes
+  tags:
+    - magento_sample_data
+
+- name: Magento | Get data sql
+  shell: "find {{magento_sample_dir.stdout_lines[0]}}/*.sql"
+  register: magento_data_sql
+
+- name: Magento | Load DB data
+  mysql_db:
+    name: "{{magento.db}}"
+    login_user: "{{mysql.user}}"
+    login_password: "{{mysql.pass}}"
+    login_port: "{{mysql.port}}"
+    target: "{{magento_data_sql.stdout_lines[0]}}"
+    state: import
+
+- name: Magento | Download SEQR plugin
+  get_url:
+    url: "{{magento.seqr_url}}"
+    dest: /tmp/magento_seqr.zip
+  tags:
+    - magento_seqr
+
+- name: Magento | Extract SEQR plugin files
+  unarchive:
+    src: /tmp/magento_seqr.zip
+    dest: /tmp
+    copy: no
+  tags:
+    - magento_seqr
+
+- name: Magento | Get SEQR plugin directory
+  shell: "find /tmp -type d -name 'seqr-magento*'"
+  register: magento_seqr_dir
+  tags:
+    - magento_seqr
+
+- name: Magento | Copy SEQR plugin files
+  shell: "{{item}}"
+  with_items:
+    - "cp -R {{magento_seqr_dir.stdout_lines[0]}}/app {{magento.dir}}/"
+    - "cp -R {{magento_seqr_dir.stdout_lines[0]}}/js {{magento.dir}}/"
+    - "cp -R {{magento_seqr_dir.stdout_lines[0]}}/skin {{magento.dir}}/"
+  tags:
+    - magento_seqr
+
+- name: Magento | Change access
+  file:
+    path: "{{item}}"
+    mode: "o+w"
+    recurse: yes
+  with_items:
+    - "{{magento.dir}}/media"
+    - "{{magento.dir}}/var"
+    - "{{magento.dir}}/app/etc"
+
+- name: Magento | Fix bug with wrong MySQL module
+  lineinfile:
+    dest: "{{magento.dir}}/app/code/core/Mage/Install/etc/config.xml"
+    regexp: <pdo_mysql/>
+    line: <pdo_mysql>1</pdo_mysql>
+  when: magento.version.find('1.6.') != -1 and magento.version.find('1.7.') != -1
+
+- name: Magento | Disable DB compatibility check
+  lineinfile:
+    dest: "{{magento.dir}}/app/code/core/Mage/Install/Model/Installer/Db/Mysql4.php"
+    regexp: public function supportEngine\(\)
+    line: public function supportEngine() {return true;} private function _remmoved_fun()
+
+- name: Magento | Install
+  shell: >
+    /usr/bin/php -f install.php -- \
+      --license_agreement_accepted yes \
+      --locale {{magento.locale}} \
+      --timezone {{magento.timezone}} \
+      --default_currency {{magento.default_currency}} \
+      --db_host localhost \
+      --db_name magento \
+      --db_user {{mysql.user}} \
+      --db_pass {{mysql.pass}} \
+      --url "{{magento.host}}" \
+      --use_rewrites yes \
+      --use_secure no \
+      --secure_base_url "{{magento.host}}" \
+      --use_secure_admin no \
+      --skip_url_validation yes \
+      --admin_lastname Admin \
+      --admin_firstname Admin \
+      --admin_email "{{magento.admin_email}}" \
+      --admin_username {{magento.admin_username}} \
+      --admin_password {{magento.admin_password}}
+  args:
+    chdir: "{{magento.dir}}"
+    creates: "{{magento.dir}}/app/etc/local.xml"
+  notify: Magento | Reset indexes
+
+- name: Magento | Copy SEQR config to server
+  copy:
+    src: ../files/magento/seqr_config.sql
+    dest: /tmp/seqr_config.sql
+
+- name: Magento | Configure SEQR
+  mysql_db:
+    name: "{{magento.db}}"
+    login_user: "{{mysql.user}}"
+    login_password: "{{mysql.pass}}"
+    login_port: "{{mysql.port}}"
+    target: "/tmp/seqr_config.sql"
+    state: import
+  run_once: true
+  notify: Magento | Reset indexes

@@ -1,0 +1,9 @@
+---
+- name: Locale | Install language pack
+  apt: name="language-pack-{{locale.language}}"
+
+- name: Locale | Generate locale for encoding
+  shell: "locale-gen {{locale.language}}_{{locale.country}}.{{locale.encoding}}"
+
+- name: Locale | Set /etc/default/locale
+  template: src=../templates/locale.j2 dest=/etc/default/locale

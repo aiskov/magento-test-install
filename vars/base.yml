@@ -1,0 +1,8 @@
+---
+time_zone: Europe/Tallinn
+locale:
+  language: en
+  country: US
+  encoding: UTF-8
+
+swap_size: 2G
