@@ -22,3 +22,10 @@ Example of Vagrantfile:
       
         config.vm.synced_folder "magento/", "/var/www/magento", :mount_options => ['dmode=777', 'fmode=777']
     end
+
+Requirments
+-----------
+
+* VM (as example VirtualBox https://www.virtualbox.org/wiki/Downloads)
+* Vagrant https://www.vagrantup.com/downloads.html
+* Ansible http://docs.ansible.com/ansible/intro_installation.html#installing-the-control-machine
